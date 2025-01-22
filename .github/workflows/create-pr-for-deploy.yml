@@ -38,7 +38,7 @@ jobs:
         run: |
           git config --global user.name 'jabl01'
           git config --global user.email 'jabl01@betssongroup.com'
-          git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/jabl01/dummy-repo-simulate-argocd.git
+          git remote set-url origin https://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@github.com/jabl01/dummy-repo-simulate-argocd.git
           git ls-remote origin
 
       - name: Commit and Push Changes
