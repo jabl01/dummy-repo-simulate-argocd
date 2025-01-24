@@ -20,9 +20,11 @@ jobs:
           if [ "$(git rev-list --count HEAD)" -le 1 ]; then
             echo "No previous commit to compare. Skipping detection."
             echo "qa_values_changed=false" >> $GITHUB_ENV
+            echo "changed_files=" >> $GITHUB_OUTPUT
           else
             changed_files=$(git diff --name-only HEAD^ HEAD)
             echo "Changed files: $changed_files"
+            echo "changed_files=$changed_files" >> $GITHUB_OUTPUT
 
             if echo "$changed_files" | grep -E "values.*qa.*\.yaml"; then
               echo "qa_values_changed=true" >> $GITHUB_ENV
@@ -47,9 +49,6 @@ jobs:
           git checkout -b "$branch_name"
           echo "branch_name=$branch_name" >> "$GITHUB_OUTPUT"
 
-      - name: Modify file
-        run: |
-          echo "Nueva línea añadida" >> output.txt
 
       - name: Setup Git
         env:
