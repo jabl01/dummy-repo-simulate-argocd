@@ -1,8 +1,7 @@
 name: Create PR for Deploy
 
 on:
-  repository_dispatch:
-    types: [create-pr-for-deploy]
+  workflow_dispatch:
         
 jobs:
   create-pr:
@@ -11,6 +10,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+
+      - name: Detect Changed Files
+        id: detect-changes
+        run: |
+          changed_files=$(git diff --name-only HEAD^ HEAD)
+          echo "Changed files: $changed_files"
+
+          if echo "$changed_files" | grep -E "values.*qa.*\.yaml"; then
+            echo "qa_values_changed=true" >> $GITHUB_ENV
+          else
+            echo "qa_values_changed=false" >> $GITHUB_ENV
+          fi
 
       - name: Get short commit sha
         id: commit-sha
