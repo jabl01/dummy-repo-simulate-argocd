@@ -49,6 +49,9 @@ jobs:
           git checkout -b "$branch_name"
           echo "branch_name=$branch_name" >> "$GITHUB_OUTPUT"
 
+      - name: modify file
+        run: |
+          echo "Nueva línea añadida" >> output.txt
 
       - name: Setup Git
         env:
