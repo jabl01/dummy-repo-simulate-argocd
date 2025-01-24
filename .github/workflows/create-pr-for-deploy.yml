@@ -7,14 +7,15 @@ jobs:
   create-pr:
     name: Create PR
     runs-on: ubuntu-latest
-    with:
-      fetch-depth: 2 
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
       - name: Detect Changed Files
         id: detect-changes
+        with:
+          fetch-depth: 2 
         run: |
           if [ "$(git rev-list --count HEAD)" -le 1 ]; then
             echo "No previous commit to compare. Skipping detection."
