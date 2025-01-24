@@ -2,7 +2,7 @@ name: Create PR for Deploy
 
 on:
   workflow_dispatch:
-        
+
 jobs:
   create-pr:
     name: Create PR
@@ -11,11 +11,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+        with:
+          fetch-depth: 2
+
       - name: Detect Changed Files
         id: detect-changes
-        with:
-          fetch-depth: 2 
         run: |
           if [ "$(git rev-list --count HEAD)" -le 1 ]; then
             echo "No previous commit to compare. Skipping detection."
@@ -75,6 +75,7 @@ jobs:
                        --head ${{ steps.create-branch.outputs.branch_name }}
 
       - name: Approve Pull Request
+        if: env.qa_values_changed == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
