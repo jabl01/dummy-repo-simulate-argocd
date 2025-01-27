@@ -9,11 +9,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
+      - name: Get short commit sha
+        id: commit-sha
+        run: |
+          sha=${{ github.event.client_payload.sha }}
+          echo ${sha}
+          sha_short=${sha:0:7}
+          echo "Short commit sha: ${sha_short}"
+          echo "sha_short=$sha_short" >> "$GITHUB_OUTPUT"
+
+      - name: Create branch
+        id: create-branch
+        run: |
+          branch_name="deploy/${{ github.event.client_payload.service }}-${{ github.event.client_payload.env }}-${{ steps.commit-sha.outputs.sha_short }}"
+          git checkout -b "$branch_name"
+          echo "branch_name=$branch_name" >> "$GITHUB_OUTPUT"
+
+      - name: modify file
+        run: |
+          echo "Nueva línea añadida" >> values.qa-euc1.yaml
+
+      - name: Setup Git
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git config --global user.name 'jabl01'
+          git config --global user.email 'jabl01@betssongroup.com'
+          git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/jabl01/dummy-repo-simulate-argocd.git
+          git ls-remote origin
+
+      - name: Commit and Push Changes
+        run: |
+          git add --all
+          git commit -m "Update docker image tag for ${{ github.event.client_payload.env }} environment" || echo "No changes to commit"
+          git push origin HEAD:refs/heads/${{ steps.create-branch.outputs.branch_name }}
+      
       - name: Detect Changed Files
         id: detect-changes
         run: |
@@ -34,41 +65,6 @@ jobs:
               echo "qa_values_changed=false" >> $GITHUB_ENV
             fi
           fi
-
-      - name: Get short commit sha
-        id: commit-sha
-        run: |
-          sha=${{ github.event.client_payload.sha }}
-          echo ${sha}
-          sha_short=${sha:0:7}
-          echo "Short commit sha: ${sha_short}"
-          echo "sha_short=$sha_short" >> "$GITHUB_OUTPUT"
-
-      - name: Create branch
-        id: create-branch
-        run: |
-          branch_name="deploy/${{ github.event.client_payload.service }}-${{ github.event.client_payload.env }}-${{ steps.commit-sha.outputs.sha_short }}"
-          git checkout -b "$branch_name"
-          echo "branch_name=$branch_name" >> "$GITHUB_OUTPUT"
-
-      - name: modify file
-        run: |
-          echo "Nueva línea añadida" >> output.txt
-
-      - name: Setup Git
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          git config --global user.name 'jabl01'
-          git config --global user.email 'jabl01@betssongroup.com'
-          git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/jabl01/dummy-repo-simulate-argocd.git
-          git ls-remote origin
-
-      - name: Commit and Push Changes
-        run: |
-          git add --all
-          git commit -m "Update docker image tag for ${{ github.event.client_payload.env }} environment" || echo "No changes to commit"
-          git push origin HEAD:refs/heads/${{ steps.create-branch.outputs.branch_name }}
 
       - name: Create Pull Request
         env:
