@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Get short commit sha
         id: commit-sha
@@ -22,8 +24,8 @@ jobs:
       - name: Create branch
         id: create-branch
         run: |
-          branch_name="deploy/${{ github.event.client_payload.service }}-${{ github.event.client_payload.env }}-${{ steps.commit-sha.outputs.sha_short }}"
-          git checkout -b "$branch_name"
+          branch_name='deploy/deploy-${{steps.commit-sha.outputs.sha_short}}'
+          git checkout -b ${branch_name}
           echo "branch_name=$branch_name" >> "$GITHUB_OUTPUT"
 
       - name: modify file
@@ -42,7 +44,7 @@ jobs:
       - name: Commit and Push Changes
         run: |
           git add --all
-          git commit -m "Update docker image tag for ${{ github.event.client_payload.env }} environment" || echo "No changes to commit"
+          git commit -m "Update docker image tag for ef environment" || echo "No changes to commit"
           git push origin HEAD:refs/heads/${{ steps.create-branch.outputs.branch_name }}
       
       - name: Detect Changed Files
