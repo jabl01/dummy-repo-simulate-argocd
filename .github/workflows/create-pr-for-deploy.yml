@@ -30,7 +30,7 @@ jobs:
 
       - name: modify file
         run: |
-          echo "Nueva línea añadida" >> ./charts/credictcardadapters-api/values.qa-euc1.yaml
+          echo "Nueva línea añadida" >> ./charts/credictcardadapters-api/sealedsecrets/creditcardservice-api_sealedsecretvalues.qa-euc1.yaml
 
       - name: Setup Git
         env:
