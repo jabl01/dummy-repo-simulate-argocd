@@ -32,6 +32,7 @@ jobs:
         run: |
           echo "Nueva línea añadida" >> ./charts/credictcardadapters-api/values.qa-euc1.yaml
           echo "Nueva línea añadida" >> ./charts/testfolder/values.qa-euc1.yaml
+          echo "Nueva línea añadida" >> ./charts/credictcardadapters-api/values.yaml
 
       - name: Setup Git
         env:
