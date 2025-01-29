@@ -31,6 +31,8 @@ jobs:
       - name: modify file
         run: |
           echo "Nueva línea añadida" >> ./charts/credictcardadapters-api/values.qa-euc1.yaml
+          echo "Nueva línea añadida" >> ./charts/credictcardadapters-api/sealedsecrets/creditcardservice-api_sealedsecretvalues.qa-euc1.yaml
+          echo "Nueva línea añadida" >> ./charts/testfolder/sealedsecrets/values.qa-euc1.yaml
 
       - name: Setup Git
         env:
@@ -61,10 +63,10 @@ jobs:
             echo "Changed files: $changed_files"
             echo "changed_files=$(echo "$changed_files" | tr '\n' ' ')" >> $GITHUB_OUTPUT
 
-            if [ "$changed_files_count" -eq 1 ] && echo "$changed_files" | grep -q -E "/values[^/]*\.qa.*\.yaml"; then
-              echo "qa_values_changed=true" >> $GITHUB_ENV
-            else
+            if echo "$changed_files" | grep -v -E "/values[^/]*\.qa.*\.yaml" > /dev/null; then
               echo "qa_values_changed=false" >> $GITHUB_ENV
+            else
+              echo "qa_values_changed=true" >> $GITHUB_ENV
             fi
           fi
 
