@@ -50,14 +50,14 @@ jobs:
       - name: Detect Changed Files
         id: detect-changes
         run: |
-          if [ "$(git rev-list --count HEAD)" -le 1 ]; then
-            echo "No previous commit to compare. Skipping detection."
+          changed_files=$(git diff --name-only HEAD^ HEAD)
+          changed_files_count=$(echo "$changed_files" | wc -l | tr -d ' ')
+
+          if [ -z "$changed_files" ]; then
+            echo "No changes detected."
             echo "qa_values_changed=false" >> $GITHUB_ENV
             echo "changed_files=" >> $GITHUB_OUTPUT
           else
-            changed_files=$(git diff --name-only HEAD^ HEAD)
-            changed_files_count=$(echo "$changed_files" | wc -l | tr -d ' ')
-
             echo "Changed files: $changed_files"
             echo "changed_files=$(echo "$changed_files" | tr '\n' ' ')" >> $GITHUB_OUTPUT
 
@@ -79,7 +79,7 @@ jobs:
       - name: Approve Pull Request
         if: env.qa_values_changed == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.JB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pr_url=$(gh pr view --json url -q '.url')
           if [ -z "$pr_url" ]; then
