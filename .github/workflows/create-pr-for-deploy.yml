@@ -92,7 +92,7 @@ jobs:
       - name: Merge Pull Request (Bypass Branch Protections)
         if: env.qa_values_changed == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pr_url=$(gh pr view --json url -q '.url')
           if [ -z "$pr_url" ]; then
