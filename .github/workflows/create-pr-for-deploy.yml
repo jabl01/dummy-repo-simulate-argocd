@@ -95,3 +95,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           pr_url=$(gh pr view --json url -q '.url')
+          if [ -z "$pr_url" ]; then
+            echo "No pull request found for branch ${{ steps.create-branch.outputs.branch_name }}"
+            exit 1
+          fi
+          echo "Merging PR: $pr_url"
+          gh pr review $pr_url --approve
