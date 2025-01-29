@@ -88,3 +88,16 @@ jobs:
             exit 1
           fi
           gh pr review $pr_url --approve
+
+      - name: Merge Pull Request (Bypass Branch Protections)
+        if: env.qa_values_changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          pr_url=$(gh pr view --json url -q '.url')
+          if [ -z "$pr_url" ]; then
+            echo "No pull request found for branch ${{ steps.create-branch.outputs.branch_name }}"
+            exit 1
+          fi
+          echo "Merging PR: $pr_url"
+          gh pr merge $pr_url --admin --merge
