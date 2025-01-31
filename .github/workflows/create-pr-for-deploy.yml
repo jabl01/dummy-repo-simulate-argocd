@@ -97,6 +97,11 @@ jobs:
           echo "INSTALLATION_TOKEN=$INSTALLATION_TOKEN" >> $GITHUB_ENV
 
       # Aprueba el Pull Request con la GitHub App
+      - name: Install jwt-cli
+        run: |
+          npm install -g jwt-cli
+
+    
       - name: Approve Pull Request (GitHub App)
         if: env.qa_values_changed == 'true'
         env:
