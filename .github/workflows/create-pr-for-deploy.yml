@@ -12,6 +12,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install jwt-cli
+        run: |
+          npm install -g jwt-cli
+
       - name: Get short commit sha
         id: commit-sha
         run: |
@@ -97,9 +101,7 @@ jobs:
           echo "INSTALLATION_TOKEN=$INSTALLATION_TOKEN" >> $GITHUB_ENV
 
       # Aprueba el Pull Request con la GitHub App
-      - name: Install jwt-cli
-        run: |
-          npm install -g jwt-cli
+
 
     
       - name: Approve Pull Request (GitHub App)
