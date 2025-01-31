@@ -28,11 +28,11 @@ jobs:
           git checkout -b ${branch_name}
           echo "branch_name=$branch_name" >> "$GITHUB_OUTPUT"
 
-      - name: modify file
+      - name: Modify file
         run: |
           echo "Nueva línea añadida" >> ./charts/credictcardadapters-api/values.qa-euc1.yaml
           echo "Nueva línea añadida" >> ./charts/testfolder/values.qa-euc1.yaml
-          
+
       - name: Setup Git
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -47,7 +47,7 @@ jobs:
           git add --all
           git commit -m "Update docker image tag for ${{ github.event.client_payload.env }} environment" || echo "No changes to commit"
           git push origin HEAD:refs/heads/${{ steps.create-branch.outputs.branch_name }}
-      
+
       - name: Detect Changed Files
         id: detect-changes
         run: |
@@ -77,14 +77,40 @@ jobs:
                        --body "Deployment triggered by ${{ github.actor }}" \
                        --head ${{ steps.create-branch.outputs.branch_name }}
 
-      - name: Approve Pull Request
+      # Obtener el installation token de la GitHub App
+      - name: Authenticate GitHub App
+        id: auth-github-app
+        env:
+          GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
+          GITHUB_PRIVATE_KEY: ${{ secrets.GITHUB_PRIVATE_KEY }}
+        run: |
+          APP_TOKEN=$(curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer $(jwt encode --key "$GITHUB_PRIVATE_KEY" --alg RS256 --claims '{"iss": '$GITHUB_APP_ID'}')" \
+            "https://api.github.com/app/installations" | jq -r '.[0].access_tokens_url')
+
+          INSTALLATION_TOKEN=$(curl -X POST \
+            -H "Authorization: Bearer $(jwt encode --key "$GITHUB_PRIVATE_KEY" --alg RS256 --claims '{"iss": '$GITHUB_APP_ID'}')" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "$APP_TOKEN" | jq -r '.token')
+
+          echo "INSTALLATION_TOKEN=$INSTALLATION_TOKEN" >> $GITHUB_ENV
+
+      # Aprueba el Pull Request con la GitHub App
+      - name: Approve Pull Request (GitHub App)
         if: env.qa_values_changed == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.JB_TOKEN }}
+          GITHUB_TOKEN: ${{ env.INSTALLATION_TOKEN }}
         run: |
-          pr_url=$(gh pr view --json url -q '.url')
-          if [ -z "$pr_url" ]; then
-            echo "No pull request found for branch ${{ steps.create-branch.outputs.branch_name }}"
+          pr_number=$(gh pr list --state open --head ${{ steps.create-branch.outputs.branch_name }} --json number -q ".[0].number")
+          if [ -z "$pr_number" ]; then
+            echo "No open pull request found."
             exit 1
           fi
-          gh pr review $pr_url --approve
+
+          echo "Approving PR #$pr_number"
+          curl -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/jabl01/dummy-repo-simulate-argocd/pulls/$pr_number/reviews" \
+            -d '{"event":"APPROVE"}'
