@@ -74,11 +74,18 @@ jobs:
               echo "qa_values_changed=true" >> $GITHUB_ENV
             fi
           fi
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create --title "Deploy ${{ github.event.client_payload.service }} to ${{ github.event.client_payload.env }}" \
+                       --body "Deployment triggered by ${{ github.actor }}" \
+                       --head ${{ steps.create-branch.outputs.branch_name }}
 
       - name: Approve Pull Request
         if: env.qa_values_changed == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.auth.outputs.token }}
         run: |
           pr_url=$(gh pr view --json url -q '.url')
           if [ -z "$pr_url" ]; then
