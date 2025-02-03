@@ -86,18 +86,32 @@ jobs:
         id: auth-github-app
         env:
           GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
-          GITHUB_PRIVATE_KEY: ${{ secrets.GITHUB_PRIVATE_KEY }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
         run: |
-          APP_TOKEN=$(curl -X POST \
+          echo "Generating JWT..."
+          JWT_TOKEN=$(jwt encode --key "$PRIVATE_KEY" --alg RS256 --claims '{"iss": '$GITHUB_APP_ID'}')
+          
+          echo "Fetching installation token..."
+          APP_TOKEN_URL=$(curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: Bearer $(jwt encode --key "$GITHUB_PRIVATE_KEY" --alg RS256 --claims '{"iss": '$GITHUB_APP_ID'}')" \
+            -H "Authorization: Bearer $JWT_TOKEN" \
             "https://api.github.com/app/installations" | jq -r '.[0].access_tokens_url')
-
+      
+          if [ -z "$APP_TOKEN_URL" ]; then
+            echo "Failed to get installation token URL"
+            exit 1
+          fi
+      
           INSTALLATION_TOKEN=$(curl -X POST \
-            -H "Authorization: Bearer $(jwt encode --key "$GITHUB_PRIVATE_KEY" --alg RS256 --claims '{"iss": '$GITHUB_APP_ID'}')" \
+            -H "Authorization: Bearer $JWT_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            "$APP_TOKEN" | jq -r '.token')
-
+            "$APP_TOKEN_URL" | jq -r '.token')
+      
+          if [ -z "$INSTALLATION_TOKEN" ]; then
+            echo "Failed to obtain installation token"
+            exit 1
+          fi
+      
           echo "INSTALLATION_TOKEN=$INSTALLATION_TOKEN" >> $GITHUB_ENV
 
       # Aprueba el Pull Request con la GitHub App
