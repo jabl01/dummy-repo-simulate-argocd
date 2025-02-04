@@ -112,7 +112,6 @@ jobs:
           
               echo "Pull Request ID: $pr_id"
               echo "pr_id=$pr_id" >> $GITHUB_ENV
-
       - name: Approve and Review Pull Request using API
         if: ${{ env.qa_values_changed == 'true' }}
         env:
@@ -122,10 +121,23 @@ jobs:
             echo "❌ No pull request found for branch ${{ steps.create-branch.outputs.branch_name }}"
             exit 1
           fi
-      
+
+          echo "✅ Checking PR ID: $pr_id"
+          
+          # Verificar si el PR existe antes de aprobarlo
+          pr_check=$(curl -s -o check_response.json -w "%{http_code}" -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/$pr_id")
+
+          if [[ "$pr_check" -ne 200 ]]; then
+            echo "❌ ERROR: Pull Request ID $pr_id not found or token has insufficient permissions."
+            cat check_response.json
+            exit 1
+          fi
+
           echo "✅ Approving and reviewing PR #$pr_id"
-      
-          response=$(curl -s -o response.json -w "%{http_code}" -X PUT \
+
+          response=$(curl -s -o response.json -w "%{http_code}" -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/pulls/$pr_id/reviews" \
@@ -133,11 +145,11 @@ jobs:
               "event": "APPROVE",
               "body": "✅ Approved automatically by GitHub Actions bot."
             }')
-      
+
           if [[ "$response" -ne 200 ]]; then
             echo "❌ ERROR: Failed to approve PR. GitHub API response:"
             cat response.json
             exit 1
           fi
-      
+
           echo "✅ PR #$pr_id approved successfully!"
