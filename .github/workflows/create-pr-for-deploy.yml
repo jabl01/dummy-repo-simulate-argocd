@@ -115,7 +115,7 @@ jobs:
       - name: Approve and Review Pull Request using API
         if: ${{ env.qa_values_changed == 'true' }}
         env:
-          GITHUB_TOKEN: ${{ steps.auth.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.JB_TOKEN }}
         run: |
           if [ -z "$pr_id" ]; then
             echo "❌ No pull request found for branch ${{ steps.create-branch.outputs.branch_name }}"
